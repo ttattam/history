@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Graph - Claude Code History</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1e293b;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .control-group input, .control-group select {
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .graph-container {
+            width: 100vw;
+            height: calc(100vh - 80px);
+            position: relative;
+            background: #fafbfc;
+            background-image: 
+                radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        #graph-svg {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+        
+        #graph-svg:active {
+            cursor: grabbing;
+        }
+        
+        /* Node styles */
+        .node {
+            cursor: pointer;
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .node:hover {
+            stroke-width: 3px;
+            filter: brightness(1.1);
+        }
+        
+        .node.selected {
+            stroke: #f59e0b;
+            stroke-width: 4px;
+        }
+        
+        /* Link styles */
+        .link {
+            stroke: #94a3b8;
+            stroke-opacity: 0.6;
+            stroke-width: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .link.similar {
+            stroke: #3b82f6;
+        }
+        
+        .link.manual {
+            stroke: #10b981;
+            stroke-dasharray: 5,5;
+        }
+        
+        .link.highlighted {
+            stroke-opacity: 0.8;
+            stroke-width: 3px;
+        }
+        
+        /* Node labels */
+        .node-label {
+            font-size: 12px;
+            fill: #374151;
+            text-anchor: middle;
+            pointer-events: none;
+            font-weight: 500;
+        }
+        
+        .node-label.selected {
+            fill: #f59e0b;
+            font-weight: 600;
+        }
+        
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .tooltip-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .tooltip-meta {
+            font-size: 11px;
+            color: #d1d5db;
+        }
+        
+        /* Legend */
+        .legend {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 12px;
+            max-width: 200px;
+        }
+        
+        .legend h4 {
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .legend-line {
+            width: 20px;
+            height: 2px;
+            border-radius: 1px;
+        }
+        
+        /* Info panel */
+        .info-panel {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 14px;
+            max-width: 300px;
+            display: none;
+        }
+        
+        .info-panel.visible {
+            display: block;
+        }
+        
+        .info-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .info-meta {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .info-summary {
+            color: #374151;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .info-links {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .info-links h5 {
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        
+        .link-strength {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            🕸️ Conversation Graph
+        </h1>
+        <div class="controls">
+            <div class="control-group">
+                <label>Threshold:</label>
+                <input type="range" id="thresholdSlider" min="0" max="1" step="0.1" value="0.5">
+                <span id="thresholdValue">0.5</span>
+            </div>
+            <div class="control-group">
+                <label>Layout:</label>
+                <select id="layoutSelect">
+                    <option value="force">Force-directed</option>
+                    <option value="circular">Circular</option>
+                    <option value="tree">Tree</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="refreshGraph()">🔄 Refresh</button>
+            <button class="btn btn-secondary" onclick="resetZoom()">⌂ Reset Zoom</button>
+            <button class="btn btn-secondary" onclick="goHome()">← Back</button>
+        </div>
+    </div>
+    
+    <div class="graph-container">
+        <svg id="graph-svg"></svg>
+        
+        <div class="legend">
+            <h4>Legend</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3b82f6;"></div>
+                <span>React/Frontend</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #10b981;"></div>
+                <span>Database/Backend</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f59e0b;"></div>
+                <span>General</span>
+            </div>
+            <div style="margin-top: 8px;">
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #3b82f6;"></div>
+                    <span>Similar</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #10b981; background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, white 2px, white 4px);"></div>
+                    <span>Manual</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel" id="infoPanel">
+            <div class="info-title" id="infoTitle">Select a conversation</div>
+            <div class="info-meta" id="infoMeta"></div>
+            <div class="info-summary" id="infoSummary"></div>
+            <div class="info-links" id="infoLinks">
+                <h5>Related Conversations</h5>
+            </div>
+        </div>
+        
+        <div class="tooltip" id="tooltip" style="display: none;"></div>
+    </div>
+
+    <script src="assets/graph.js"></script>
+</body>
+</html>

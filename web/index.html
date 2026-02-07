@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code History</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #64748b;
+            font-size: 16px;
+        }
+        
+        .search-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        #searchInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+        
+        #searchInput:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-group label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .filter-group select {
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .result-item {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 20px 0;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 16px;
+        }
+        
+        .conversation-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            flex: 1;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .conversation-title:hover {
+            color: #3b82f6;
+        }
+        
+        .conversation-meta {
+            font-size: 14px;
+            color: #64748b;
+            text-align: right;
+        }
+        
+        .message-preview {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .message-role {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        
+        .message-content {
+            color: #374151;
+            line-height: 1.5;
+        }
+        
+        .message-content mark {
+            background: #fef3c7;
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        
+        .conversation-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            padding: 4px 8px;
+            background: #e0f2fe;
+            color: #0369a1;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            border: 1px solid #fecaca;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .result-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 Claude Code History</h1>
+            <p class="subtitle">Search through all your Claude Code conversations</p>
+        </header>
+        
+        <div class="search-section">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search conversations... (e.g., 'React hooks', 'database optimization', 'fix bug')"
+                    autofocus
+                >
+                <button class="btn btn-primary" onclick="search()">🔍 Search</button>
+                <button class="btn btn-secondary" onclick="loadConversations()">📋 All</button>
+                <button class="btn btn-secondary" onclick="window.location.href='graph.html'">🕸️ Graph</button>
+            </div>
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Type:</label>
+                    <select id="searchType">
+                        <option value="messages">In Messages</option>
+                        <option value="conversations">By Title</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Project:</label>
+                    <select id="projectFilter">
+                        <option value="">All Projects</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Limit:</label>
+                    <select id="limitFilter">
+                        <option value="20">20 results</option>
+                        <option value="50">50 results</option>
+                        <option value="100">100 results</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="results-section">
+            <div id="statsContainer" class="stats" style="display: none;">
+                <div class="stat">
+                    <div class="stat-value" id="totalConversations">-</div>
+                    <div class="stat-label">Conversations</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalMessages">-</div>
+                    <div class="stat-label">Messages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalProjects">-</div>
+                    <div class="stat-label">Projects</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="dateRange">-</div>
+                    <div class="stat-label">Date Range</div>
+                </div>
+            </div>
+            
+            <div id="resultsContainer">
+                <div class="empty-state">
+                    <h3>👋 Welcome to your Claude Code memory!</h3>
+                    <p>Search for specific topics or view all conversations to get started.</p>
+                    <br>
+                    <p><strong>Try searching for:</strong> "React", "bug fix", "optimization", or any topic you've discussed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/app.js"></script>
+</body>
+</html>

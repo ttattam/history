@@ -1,0 +1,22 @@
+{
+  "name": "claude-code-history",
+  "version": "1.0.0",
+  "description": "Personal memory system for Claude Code conversations",
+  "main": "api/server.js",
+  "type": "module",
+  "scripts": {
+    "init": "bun run database/init.js",
+    "dev": "bun run api/server.js",
+    "import": "bun run scripts/import-claude.js",
+    "backup": "bun run scripts/backup.js",
+    "setup": "./scripts/setup.sh"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.0"
+  },
+  "trustedDependencies": ["better-sqlite3"],
+  "devDependencies": {},
+  "keywords": ["claude-code", "ai", "memory", "search", "sqlite"],
+  "author": "tomtam",
+  "license": "MIT"
+}

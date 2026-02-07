@@ -1,0 +1,31 @@
+{
+  "conversation": {
+    "id": "test_conv_3", 
+    "messages": [
+      {
+        "id": "msg3_1",
+        "role": "user",
+        "content": "Помоги настроить PostgreSQL базу данных для проекта",
+        "timestamp": 1641224000
+      },
+      {
+        "id": "msg3_2",
+        "role": "assistant",
+        "content": "Конечно! Сначала установи PostgreSQL, создай базу: CREATE DATABASE myproject; Потом настрой подключение в .env файле",
+        "timestamp": 1641224060
+      },
+      {
+        "id": "msg3_3", 
+        "role": "user",
+        "content": "А как лучше структурировать таблицы для пользователей и постов?",
+        "timestamp": 1641224120
+      },
+      {
+        "id": "msg3_4",
+        "role": "assistant",
+        "content": "Создай таблицы users и posts с внешними ключами. Для users: id, email, password_hash, created_at. Для posts: id, user_id, title, content, created_at",
+        "timestamp": 1641224180
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "conversation": {
+    "id": "test_conv_2",
+    "messages": [
+      {
+        "id": "msg2_1", 
+        "role": "user",
+        "content": "Как лучше оптимизировать React приложение для производительности?",
+        "timestamp": 1641124000
+      },
+      {
+        "id": "msg2_2",
+        "role": "assistant", 
+        "content": "Для оптимизации React приложения рекомендую: 1) React.memo для компонентов, 2) useCallback/useMemo для функций, 3) виртуализация длинных списков, 4) код-сплиттинг",
+        "timestamp": 1641124060
+      },
+      {
+        "id": "msg2_3",
+        "role": "user",
+        "content": "А что насчёт Bundle Analyzer для анализа размера бандла?",
+        "timestamp": 1641124120
+      },
+      {
+        "id": "msg2_4",
+        "role": "assistant",
+        "content": "Да! webpack-bundle-analyzer отлично подходит. Запускается через npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
+        "timestamp": 1641124180
+      }
+    ]
+  }
+}
