@@ -181,22 +181,24 @@ class ConversationLinkingService {
             
             for (const sim of similar) {
                 // Check if link already exists
-                const existing = this.getExistingLinks.get(conversationId);
+                const existing = this.getExistingLinks.all(conversationId);
                 const alreadyLinked = existing && existing.find(link => link.to_id === sim.conversation_id);
                 
                 if (!alreadyLinked) {
                     // Create bidirectional links
-                    const reason = `Similar topics (${Math.round(sim.similarity * 100)}% similarity)`;
+                    // Ensure similarity is between 0.0 and 1.0
+                    const normalizedSimilarity = Math.min(Math.max(sim.similarity, 0.0), 1.0);
+                    const reason = `Similar topics (${Math.round(normalizedSimilarity * 100)}% similarity)`;
                     const timestamp = Math.floor(Date.now() / 1000);
                     
                     this.insertConversationLink.run(
                         conversationId, sim.conversation_id, 'similar', 
-                        sim.similarity, reason, timestamp
+                        normalizedSimilarity, reason, timestamp
                     );
                     
                     this.insertConversationLink.run(
                         sim.conversation_id, conversationId, 'similar', 
-                        sim.similarity, reason, timestamp
+                        normalizedSimilarity, reason, timestamp
                     );
                     
                     linksCreated += 2;
