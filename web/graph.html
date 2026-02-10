@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversation Graph - Claude Code History</title>
     <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
-    <script src="https://unpkg.com/cytoscape-cose-bilkent@4.1.0/cytoscape-cose-bilkent.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -200,11 +199,11 @@
             <div class="control-group">
                 <label>Layout:</label>
                 <select id="layoutSelect">
-                    <option value="cose-bilkent">Smart Layout</option>
                     <option value="cose">Force Directed</option>
                     <option value="circle">Circle</option>
                     <option value="grid">Grid</option>
                     <option value="concentric">Concentric</option>
+                    <option value="breadthfirst">Breadth First</option>
                 </select>
             </div>
             <div class="control-group">
@@ -246,34 +245,46 @@
         let cy;
         let allData = { nodes: [], edges: [] };
         
+        // API Base URL - автоматически определяем
+        const API_BASE = window.location.origin;
+        
         // Initialize graph
         async function initGraph() {
             try {
-                const [conversations, links] = await Promise.all([
-                    fetch('/conversations?limit=200').then(r => r.json()),
-                    fetchAllLinks()
-                ]);
+                console.log('🚀 Starting graph initialization...');
+                
+                console.log('📥 Fetching conversations...');
+                const conversations = await fetch(`${API_BASE}/conversations?limit=200`).then(r => r.json());
+                console.log('✅ Got conversations:', conversations.conversations?.length || 0);
+                
+                console.log('🔗 Fetching links...');
+                const links = await fetchAllLinks();
+                console.log('✅ Got links:', links?.length || 0);
                 
                 allData = prepareGraphData(conversations.conversations, links);
+                console.log('📊 Prepared graph data - nodes:', allData.nodes.length, 'edges:', allData.edges.length);
+                
                 createGraph();
                 updateGraphInfo();
                 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('graphInfo').style.display = 'block';
                 
+                console.log('🎉 Graph initialization complete!');
+                
             } catch (error) {
-                console.error('Failed to load graph data:', error);
-                document.getElementById('loading').innerHTML = '<div>Failed to load graph data</div>';
+                console.error('❌ Failed to load graph data:', error);
+                document.getElementById('loading').innerHTML = '<div>❌ Failed to load graph data: ' + error.message + '</div>';
             }
         }
         
         async function fetchAllLinks() {
-            const conversations = await fetch('/conversations?limit=200').then(r => r.json());
+            const conversations = await fetch(`${API_BASE}/conversations?limit=200`).then(r => r.json());
             const allLinks = [];
             
             for (const conv of conversations.conversations) {
                 try {
-                    const links = await fetch(`/conversations/${conv.id}/links`).then(r => r.json());
+                    const links = await fetch(`${API_BASE}/conversations/${conv.id}/links`).then(r => r.json());
                     allLinks.push(...links.links.map(link => ({
                         ...link,
                         source: conv.id,
@@ -396,7 +407,7 @@
                 ],
                 
                 layout: {
-                    name: 'cose-bilkent',
+                    name: 'cose',
                     animate: true,
                     animationDuration: 1000,
                     nodeDimensionsIncludeLabels: true,
@@ -489,8 +500,8 @@
                 animate: true,
                 animationDuration: 800,
                 nodeDimensionsIncludeLabels: true,
-                idealEdgeLength: layout === 'cose-bilkent' ? 100 : 80,
-                nodeRepulsion: layout === 'cose-bilkent' ? 8000 : 4500,
+                idealEdgeLength: layout === 'cose' ? 100 : 80,
+                nodeRepulsion: layout === 'cose' ? 8000 : 4500,
                 edgeElasticity: 100
             }).run();
             
